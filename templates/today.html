@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon, load_tag %}
+
+{% block content %}
+  <!-- Date and page title -->
+  <p class="note">{{ day }}</p>
+  <h1>Today</h1>
+
+  <!-- Your pace today: level, 3-part bar, reasons and a quick check -->
+  <section class="card">
+    <h2>Your pace today</h2>
+    <p class="pace-level">{{ pace.level }}</p>
+    <div class="pace-bar">
+      {% for step in ["Gentle", "Steady", "Ready"] %}
+        <div class="pace-step {% if step == pace.level %}current{% endif %}">
+          <span class="pace-fill"></span>
+          <span>{{ step }}</span>
+        </div>
+      {% endfor %}
+    </div>
+    <ul class="reasons">
+      <li>{{ icon("moon") }} {{ pace.sleep_reason }}</li>
+      <li>{{ icon("heart") }} {{ pace.heart_reason }}</li>
+    </ul>
+    <p>Does this feel right?</p>
+    <div class="actions">
+      <button type="button" class="btn-primary">Yes</button>
+      <a class="text-link" href="{{ url_for('checkin') }}">Not really</a>
+    </div>
+  </section>
+
+  <!-- From your inbox: one card per message, only shown if there are any -->
+  {% for item in inbox %}
+    <section class="card">
+      <h2>From your inbox</h2>
+      <p><strong>{{ item["from"] }}</strong>: {{ item.summary }}</p>
+      <div class="actions">
+        <button type="button" class="btn-primary">Add to my plan</button>
+        <button type="button" class="btn-secondary">Not now</button>
+      </div>
+    </section>
+  {% endfor %}
+
+  <!-- My plan: one card per task with icon, time, source and load tag; tap to open its steps -->
+  <h2>My plan</h2>
+  <ul class="task-list">
+    {% for t in tasks %}
+      <li><a class="card task" href="{{ url_for('task_steps', index=loop.index0) }}">
+        <span class="task-icon">{{ icon(t.source) }}</span>
+        <div class="task-info">
+          <strong>{{ t.title }}</strong>
+          <span class="note">
+            {{ t.time }}
+            {% if t.source == "calendar" %} · from your calendar{% elif t.source == "inbox" %} · from your inbox{% endif %}
+          </span>
+        </div>
+        {{ load_tag(t.load) }}
+      </a></li>
+    {% endfor %}
+  </ul>
+
+  <!-- Round + button for adding a task -->
+  <a class="add-button" href="{{ url_for('add_task') }}" aria-label="Add a task">{{ icon("plus") }}</a>
+{% endblock %}

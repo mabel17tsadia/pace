@@ -22,4 +22,9 @@ A web app for the North American AI Challenge, built with Flask.
    ```
 5. Open http://127.0.0.1:5000 in your browser.
 
-API keys go in a `.env` file, which is never committed.
+API keys go in a `.env` file, which is never committed. It needs:
+```
+ANTHROPIC_API_KEY=your-key
+SECRET_KEY=any-long-random-text
+```
+(`SECRET_KEY` lets Flask remember each user's theme.)

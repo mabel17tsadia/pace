@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <!-- Link back to Today and the task title -->
+  <a class="text-link" href="{{ url_for('today') }}">‹ Today</a>
+  <h1>{{ task.title }}</h1>
+
+  <!-- Steps panel: counter, progress bar, the current step and its buttons -->
+  <section id="steps-view" class="card" tabindex="-1">
+    <div aria-live="polite">
+      <p id="step-count" class="note">Step 1 of {{ task.steps | length }}</p>
+      <div class="progress" aria-hidden="true"><div id="progress-fill" class="progress-fill"></div></div>
+      <ol class="steps">
+        {% for step in task.steps %}
+          <li class="step-text" {% if not loop.first %}hidden{% endif %}>{{ step }}</li>
+        {% endfor %}
+      </ol>
+    </div>
+    <div class="actions">
+      <button type="button" id="done" class="btn-primary">Done</button>
+      <button type="button" id="back" class="btn-secondary">Back</button>
+      <button type="button" id="break" class="btn-secondary">I need a break</button>
+    </div>
+  </section>
+
+  <!-- Break panel: a pause message and the things that help this person feel calm -->
+  <section id="break-view" class="card" tabindex="-1" hidden>
+    <h2>Take a break</h2>
+    <p>Your place is saved. These usually help you feel calm:</p>
+    <ul>
+      {% for c in person.calms %}<li>{{ c }}</li>{% endfor %}
+    </ul>
+    <button type="button" id="resume" class="btn-primary">Back to my step</button>
+  </section>
+
+  <!-- Finish panel: a gentle message after the last step -->
+  <section id="finish-view" class="card" tabindex="-1" hidden>
+    <h2>All done</h2>
+    <p>You finished “{{ task.title }}”. Nice work. Take a moment before the next thing.</p>
+    <a class="btn-primary" href="{{ url_for('today') }}">Back to Today</a>
+  </section>
+
+  <script src="{{ url_for('static', filename='js/steps.js') }}"></script>
+{% endblock %}

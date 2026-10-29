@@ -1,14 +1,573 @@
-/* Theme colors and fonts used across the app */
-:root {
-  --bg: #ffffff;
-  --text: #1a1a1a;
-  --font: system-ui, sans-serif;
+/* ===== Themes: each one sets the same color names; <body data-theme> picks one ===== */
+/* Alerts use amber/brown, never red. --on-primary is the text color on primary buttons. */
+
+/* Calm: soft blue-grey */
+body[data-theme="calm"] {
+  --bg: #F3F5F7; --surface: #FFFFFF; --surface2: #E3E8ED;
+  --text: #26323C; --muted: #55626E; --border: #DCE2E8;
+  --primary: #3E5C76; --primary-soft: #E2EAF1;
+  --secondary: #3F6F6A; --secondary-soft: #DDEDEA;
+  --alert: #7A5410; --alert-soft: #F6EBD3;
+  --on-primary: #FFFFFF;
 }
 
-/* Basic page look */
+/* Colorful: warm cream with purple and teal */
+body[data-theme="colorful"] {
+  --bg: #FFF7EC; --surface: #FFFFFF; --surface2: #F5E3C8;
+  --text: #231F3A; --muted: #5A5570; --border: #F0DFC6;
+  --primary: #5B3FD0; --primary-soft: #ECE6FF;
+  --secondary: #08706E; --secondary-soft: #D9F3F0;
+  --alert: #8A4B00; --alert-soft: #FFE9B8;
+  --on-primary: #FFFFFF;
+}
+
+/* Bright: white with strong blue */
+body[data-theme="bright"] {
+  --bg: #FFFFFF; --surface: #F3F6F9; --surface2: #DCE4EC;
+  --text: #0B1220; --muted: #3E4A57; --border: #C8D2DC;
+  --primary: #0A58CA; --primary-soft: #E5EFFF;
+  --secondary: #00695C; --secondary-soft: #DDF2EE;
+  --alert: #7A4A00; --alert-soft: #FFEFC7;
+  --on-primary: #FFFFFF;
+}
+
+/* Dark: dark grey with soft green */
+body[data-theme="dark"] {
+  --bg: #15191C; --surface: #1F2529; --surface2: #323A40;
+  --text: #ECEFF1; --muted: #A7B2B8; --border: #323A40;
+  --primary: #8CC2A3; --primary-soft: #24352C;
+  --secondary: #9EB9D4; --secondary-soft: #23303D;
+  --alert: #E6C46C; --alert-soft: #3A3221;
+  --on-primary: #10181A;
+}
+
+/* ===== Basic page look ===== */
 body {
+  margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font);
-  margin: 2rem;
+  font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+/* Headings use Lexend */
+h1, h2, h3 {
+  font-family: "Lexend", system-ui, sans-serif;
+}
+
+/* Page content area; extra bottom space so the nav bar and + button never cover it */
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 9rem;
+}
+
+/* Buttons, at least 48px tall for easy tapping */
+.btn-primary, .btn-secondary {
+  min-height: 48px;
+  padding: 0 1.25rem;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 700;
+}
+
+/* Main button: filled with the primary color */
+.btn-primary {
+  border: none;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+/* Second button: outlined */
+.btn-secondary {
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* A row of buttons and links */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Card: a box that groups related content */
+.card {
+  margin-bottom: 1rem;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.card h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+/* Small grey note text */
+.note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Plain text link, tall enough to tap easily */
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* ===== Choose a demo person: list of large tappable cards ===== */
+.person-list {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.person-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.person-card:hover {
+  border-color: var(--primary);
+}
+
+/* Initials inside a circle */
+.initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-family: "Lexend", system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.person-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* ===== Today: pace card ===== */
+.pace-level {
+  margin: 0 0 0.75rem;
+  color: var(--primary);
+  font-family: "Lexend", system-ui, sans-serif;
+  font-size: 2.25rem;
+  font-weight: 700;
+}
+
+/* 3-part bar: Gentle, Steady, Ready; only the current part is filled */
+.pace-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.pace-step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.pace-fill {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--surface2);
+}
+
+.pace-step.current {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.pace-step.current .pace-fill {
+  background: var(--primary);
+}
+
+/* Reasons list with a small icon before each one */
+.reasons {
+  padding: 0;
+  list-style: none;
+}
+
+.reasons li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.reasons .icon {
+  color: var(--secondary);
+}
+
+/* ===== Today: My plan task cards ===== */
+.task-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.task {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.task-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--surface2);
+}
+
+.task-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Load tag: bars plus the word, so it never relies on color alone */
+.load {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.load-bars {
+  display: flex;
+  gap: 2px;
+}
+
+/* Each bar; empty bars are faded, filled bars ("on") are solid */
+.load-bars span {
+  width: 5px;
+  height: 14px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.25;
+}
+
+.load-bars span.on {
+  opacity: 1;
+}
+
+.load-light { background: var(--primary-soft); color: var(--primary); }
+.load-medium { background: var(--secondary-soft); color: var(--secondary); }
+.load-heavy { background: var(--alert-soft); color: var(--alert); }
+
+/* Round + button floating above the phone nav bar */
+.add-button {
+  position: fixed;
+  right: 1rem;
+  bottom: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.add-button .icon {
+  width: 28px;
+  height: 28px;
+}
+
+/* Task cards on Today are links: keep normal text color, no underline */
+a.task {
+  color: var(--text);
+  text-decoration: none;
+}
+
+a.task:hover {
+  border-color: var(--primary);
+}
+
+/* ===== Task steps page ===== */
+/* Progress bar: grey track with a primary-colored fill */
+.progress {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--surface2);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: var(--primary);
+}
+
+/* The current step in large, easy-to-read text */
+.steps {
+  margin: 1.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* Greyed-out button (e.g. Back on the first step) */
+button:disabled {
+  opacity: 0.5;
+}
+
+/* A link styled as a button needs to line up its text */
+a.btn-primary, a.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+/* Panels that get focus from the script don't need an outline */
+section[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* ===== Picture buttons (feelings on Check in, load levels on Add a task) ===== */
+/* A row of choices; wraps onto two rows on narrow phones */
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  border: none;
+}
+
+.choices legend, .step-fields legend {
+  margin-bottom: 0.75rem;
+  font-family: "Lexend", system-ui, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Each choice: a picture with its word underneath */
+.choice-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.25rem;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.choice-box .icon {
+  width: 40px;
+  height: 40px;
+}
+
+/* The picked choice: thicker border, soft fill and bold word (not color alone) */
+.choice input:checked + .choice-box {
+  border: 3px solid var(--primary);
+  background: var(--primary-soft);
+  font-weight: 700;
+}
+
+/* Keyboard focus on a choice */
+.choice input:focus-visible + .choice-box {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ===== Form fields: text boxes, time and the note box ===== */
+label {
+  font-weight: 700;
+}
+
+input[type="text"], input[type="time"], textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  margin: 0.5rem 0 1rem;
+  padding: 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+/* Steps boxes on Add a task, stacked with small gaps */
+.step-fields {
+  margin: 0 0 1rem;
+  padding: 0;
+  border: none;
+}
+
+.step-fields input {
+  margin: 0 0 0.5rem;
+}
+
+/* Earlier check ins list */
+.checkin-list {
+  padding: 0;
+  list-style: none;
+}
+
+.checkin-list .icon {
+  vertical-align: middle;
+}
+
+/* Hides something visually but keeps it for screen readers and keyboards */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Message shown after an action, e.g. "Check in saved" */
+.flash {
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--secondary);
+  border-radius: 8px;
+  background: var(--secondary-soft);
+}
+
+/* Make sure hidden things stay hidden even if a class sets display */
+[hidden] {
+  display: none !important;
+}
+
+/* Clear outline when moving around with the keyboard */
+a:focus-visible, button:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ===== Phones (default): navigation is a bar fixed to the bottom ===== */
+.brand {
+  display: none;
+}
+
+.main-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+/* Each nav link: icon above label, fills an equal share of the bar */
+.main-nav a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+/* The link for the page you're on */
+.main-nav a[aria-current="page"] {
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* Icons are drawn with lines in the surrounding text color */
+.main-nav svg, .icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ===== Wide screens (900px and up): navigation becomes a top bar ===== */
+@media (min-width: 900px) {
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 2rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    color: var(--primary);
+    font-family: "Lexend", system-ui, sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .main-nav {
+    position: static;
+    gap: 0.5rem;
+    background: none;
+    border-top: none;
+  }
+
+  .main-nav a {
+    flex-direction: row;
+    gap: 0.5rem;
+    min-height: 48px;
+    padding: 0 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  main {
+    padding-bottom: 6rem;
+  }
+
+  .add-button {
+    right: 2rem;
+    bottom: 2rem;
+  }
 }
