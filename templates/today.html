@@ -1,80 +1,92 @@
 {% extends "base.html" %}
-{% from "macros.html" import icon, load_tag %}
+{% from "macros.html" import icon %}
+
+{% block main_class %}dashboard{% endblock %}
 
 {% block content %}
-  <!-- Date and page title -->
-  <p class="note">{{ day }}</p>
-  <h1>Today</h1>
-
-  <!-- Your pace today: level, 3-part bar, reasons and a quick check -->
-  <section class="card">
-    <h2>Your pace today</h2>
-    <p class="pace-level">{{ pace.level }}</p>
-    <div class="pace-bar">
-      {% for step in ["Gentle", "Steady", "Ready"] %}
-        <div class="pace-step {% if step == pace.level %}current{% endif %}">
-          <span class="pace-fill"></span>
-          <span>{{ step }}</span>
-        </div>
-      {% endfor %}
-    </div>
-    <ul class="reasons">
-      <li>{{ icon("moon") }} {{ pace.sleep_reason }}</li>
-      <li>{{ icon("heart") }} {{ pace.heart_reason }}</li>
-    </ul>
-    <p>Does this feel right?</p>
-    <div class="actions">
-      <button type="button" class="btn-primary">Yes</button>
-      <a class="text-link" href="{{ url_for('checkin') }}">Not really</a>
-    </div>
-  </section>
-
-  <!-- Gentle alert: a kind message about a Heavy task on a Gentle day, with four choices -->
-  {% if alert %}
-    <section class="card alert-card">
-      <h2>A gentle heads-up</h2>
-      <p class="task-line"><strong>{{ alert.task.title }}</strong> {{ alert.task.time }} {{ load_tag(alert.task.load) }}</p>
-      <p>{{ alert.message }}</p>
-      <form method="post" action="{{ url_for('alert_choice') }}" class="actions">
-        <input type="hidden" name="title" value="{{ alert.task.title }}">
-        <button type="submit" name="choice" value="lighter" class="btn-primary">Do a lighter task first</button>
-        <button type="submit" name="choice" value="move" class="btn-secondary">Move it to tomorrow</button>
-        <button type="submit" name="choice" value="keep" class="btn-secondary">Keep my plan</button>
-        <button type="submit" name="choice" value="message" class="btn-secondary">Message someone I trust</button>
-      </form>
+  <!-- Greeting banner (laptops only, can be turned off on Me): greeting and date over a flat sunset -->
+  {% if show_banner %}
+    <section class="banner desktop-only">
+      <svg class="banner-art" viewBox="0 0 1200 200" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <rect class="sky" width="1200" height="200"/>
+        <circle class="sun" cx="900" cy="150" r="70"/>
+        <path class="hill-back" d="M0 140 Q300 80 600 130 T1200 120 V200 H0 Z"/>
+        <path class="hill-front" d="M0 170 Q400 120 800 165 T1200 160 V200 H0 Z"/>
+      </svg>
+      <div class="banner-text">
+        <p class="banner-greeting">{{ greeting }}, {{ person.first_name }}</p>
+        <p>{{ day }}</p>
+      </div>
     </section>
   {% endif %}
 
-  <!-- From your inbox: one card per message, only shown if there are any -->
-  {% for item in inbox %}
-    <section class="card">
-      <h2>From your inbox</h2>
-      <p><strong>{{ item["from"] }}</strong>: {{ item.summary }}</p>
-      <div class="actions">
-        <button type="button" class="btn-primary">Add to my plan</button>
-        <button type="button" class="btn-secondary">Not now</button>
-      </div>
-    </section>
-  {% endfor %}
+  <!-- Date and page title (on laptops, hidden when the banner shows the date instead) -->
+  <div class="{% if show_banner %}phone-only{% endif %}">
+    <p class="note">{{ day }}</p>
+    <h1>Today</h1>
+  </div>
 
-  <!-- My plan: one card per task with icon, time, source and load tag; tap to open its steps -->
-  <h2>My plan</h2>
-  <ul class="task-list">
-    {% for t in tasks %}
-      <li><a class="card task" href="{{ url_for('task_steps', index=loop.index0) }}">
-        <span class="task-icon">{{ icon(t.source) }}</span>
-        <div class="task-info">
-          <strong>{{ t.title }}</strong>
-          <span class="note">
-            {{ t.time }}
-            {% if t.source == "calendar" %} · from your calendar{% elif t.source == "inbox" %} · from your inbox{% endif %}
-          </span>
+  <div class="dashboard-grid">
+    <!-- Left column (all of Today on phones): pace, alert, inbox (phones only) and My plan -->
+    <div>
+      {% include "partials/pace_card.html" %}
+      {% if alert %}{% include "partials/alert_card.html" %}{% endif %}
+      {% for item in inbox %}
+        <section class="card phone-only">
+          <h2>From your inbox</h2>
+          {% include "partials/inbox_item.html" %}
+        </section>
+      {% endfor %}
+      {% include "partials/plan.html" %}
+    </div>
+
+    <!-- Right column (laptops only) -->
+    <aside class="desktop-only">
+      <!-- New for you: inbox messages and calendar items -->
+      <section class="card">
+        <h2>New for you</h2>
+        {% for item in inbox %}{% include "partials/inbox_item.html" %}{% endfor %}
+        <ul class="new-list">
+          {% for t in tasks if t.source == "calendar" %}
+            <li><a href="{{ url_for('task_steps', index=tasks.index(t)) }}">{{ icon("calendar") }} {{ t.title }} · {{ t.time }}</a></li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <!-- My body today: small heart rate line, last night's sleep and today's steps -->
+      <section class="card chart-small">
+        <h2>My body today</h2>
+        {% include "partials/heart_chart.html" %}
+        <p>Average {{ chart.average }} bpm (usual {{ chart.usual }})<br>
+           Slept {{ last_day.sleep_min | hours }} · {{ "{:,}".format(last_day.steps) }} steps</p>
+        <a class="text-link" href="{{ url_for('body') }}">See more</a>
+      </section>
+
+      <!-- My trust circle: initials of each person and a message button -->
+      <section class="card">
+        <h2>My trust circle</h2>
+        <div class="initials-row">
+          {% for c in circle %}
+            <span class="initials initials-small" title="{{ c.name }}">{{ c.name.split()[0][0] }}{{ c.name.split()[-1][0] }}</span>
+          {% endfor %}
         </div>
-        {{ load_tag(t.load) }}
-      </a></li>
-    {% endfor %}
-  </ul>
+        <a class="btn-secondary" href="{{ url_for('circle') }}">Message someone I trust</a>
+      </section>
 
-  <!-- Round + button for adding a task -->
-  <a class="add-button" href="{{ url_for('add_task') }}" aria-label="Add a task">{{ icon("plus") }}</a>
+      <!-- Last check in: the newest one saved, or a link to check in -->
+      <section class="card">
+        <h2>Last check in</h2>
+        {% if last_checkin %}
+          <p>{{ icon("face-" ~ last_checkin.feeling | lower) }} <strong>{{ last_checkin.feeling }}</strong> · {{ last_checkin.time }}</p>
+          {% if last_checkin.note %}<p>{{ last_checkin.note }}</p>{% endif %}
+        {% else %}
+          <p>No check in yet today.</p>
+        {% endif %}
+        <a class="text-link" href="{{ url_for('checkin') }}">Check in</a>
+      </section>
+    </aside>
+  </div>
+
+  <!-- Round + button for adding a task (phones only) -->
+  <a class="add-button phone-only" href="{{ url_for('add_task') }}" aria-label="Add a task">{{ icon("plus") }}</a>
 {% endblock %}

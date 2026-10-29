@@ -1,8 +1,9 @@
-/* ===== Themes: each one sets the same color names; <body data-theme> picks one ===== */
+/* ===== Themes: each one sets the same color names; data-theme on <body> picks one ===== */
+/* (Any element can use data-theme, which is how Settings previews each theme.) */
 /* Alerts use amber/brown, never red. --on-primary is the text color on primary buttons. */
 
 /* Calm: soft blue-grey */
-body[data-theme="calm"] {
+[data-theme="calm"] {
   --bg: #F3F5F7; --surface: #FFFFFF; --surface2: #E3E8ED;
   --text: #26323C; --muted: #55626E; --border: #DCE2E8;
   --primary: #3E5C76; --primary-soft: #E2EAF1;
@@ -12,7 +13,7 @@ body[data-theme="calm"] {
 }
 
 /* Colorful: warm cream with purple and teal */
-body[data-theme="colorful"] {
+[data-theme="colorful"] {
   --bg: #FFF7EC; --surface: #FFFFFF; --surface2: #F5E3C8;
   --text: #231F3A; --muted: #5A5570; --border: #F0DFC6;
   --primary: #5B3FD0; --primary-soft: #ECE6FF;
@@ -22,7 +23,7 @@ body[data-theme="colorful"] {
 }
 
 /* Bright: white with strong blue */
-body[data-theme="bright"] {
+[data-theme="bright"] {
   --bg: #FFFFFF; --surface: #F3F6F9; --surface2: #DCE4EC;
   --text: #0B1220; --muted: #3E4A57; --border: #C8D2DC;
   --primary: #0A58CA; --primary-soft: #E5EFFF;
@@ -32,7 +33,7 @@ body[data-theme="bright"] {
 }
 
 /* Dark: dark grey with soft green */
-body[data-theme="dark"] {
+[data-theme="dark"] {
   --bg: #15191C; --surface: #1F2529; --surface2: #323A40;
   --text: #ECEFF1; --muted: #A7B2B8; --border: #323A40;
   --primary: #8CC2A3; --primary-soft: #24352C;
@@ -365,11 +366,162 @@ button:disabled {
   opacity: 0.5;
 }
 
-/* A link styled as a button needs to line up its text */
-a.btn-primary, a.btn-secondary {
+/* A link (or a details "summary") styled as a button needs to line up its text */
+a.btn-primary, a.btn-secondary, summary.btn-secondary {
   display: inline-flex;
   align-items: center;
   text-decoration: none;
+  cursor: pointer;
+}
+
+/* ===== Circle and Me: a row with initials next to a name ===== */
+.person-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.initials-small {
+  width: 48px;
+  height: 48px;
+  font-size: 1.1rem;
+}
+
+/* Opened message box under a circle person */
+.message-box[open] summary {
+  margin-bottom: 1rem;
+}
+
+/* Me: list of links to more screens, each a full-width row */
+.link-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.link-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.link-list a:last-child {
+  border-bottom: none;
+}
+
+/* ===== My body today ===== */
+/* Line chart: scales to the card width; colors come from the theme */
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chart text {
+  fill: var(--muted);
+  font-size: 14px;
+}
+
+.chart-axis {
+  stroke: var(--border);
+  stroke-width: 2;
+}
+
+/* Dashed line for the usual resting heart rate */
+.chart-usual {
+  stroke: var(--secondary);
+  stroke-width: 2;
+  stroke-dasharray: 6 6;
+}
+
+/* The heart rate line itself */
+.chart-line {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+/* Last 7 days table */
+.week {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.week th, .week td {
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+/* Small bar under each value; its width is set in the template */
+.bar {
+  display: block;
+  height: 6px;
+  margin-top: 4px;
+  border-radius: 3px;
+  background: var(--surface2);
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--secondary);
+}
+
+/* ===== Settings ===== */
+/* Theme options, each drawn in its own theme colors */
+.theme-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* The current theme: thicker border plus the word "(current)" */
+.theme-option[aria-current] {
+  border: 4px solid var(--primary);
+}
+
+.swatches {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.swatches span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+/* Demo controls: a closed section with a tappable title */
+.demo-controls summary {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 /* Panels that get focus from the script don't need an outline */
@@ -542,15 +694,125 @@ a:focus-visible, button:focus-visible {
   stroke-linejoin: round;
 }
 
+/* ===== Today on laptops: greeting banner and dashboard pieces ===== */
+/* Greeting banner: text over a flat sunset drawn with theme colors */
+.banner {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  padding: 2rem;
+  border-radius: 12px;
+}
+
+.banner-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.banner-art .sky { fill: var(--alert-soft); }
+.banner-art .sun { fill: var(--alert); opacity: 0.35; }
+.banner-art .hill-back { fill: var(--secondary-soft); }
+.banner-art .hill-front { fill: var(--primary-soft); }
+
+/* Text sits above the picture */
+.banner-text {
+  position: relative;
+  padding-bottom: 2.5rem;
+}
+
+.banner-text p {
+  margin: 0;
+}
+
+.banner-greeting {
+  font-family: "Lexend", system-ui, sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* My plan heading with the "+ Add a task" button beside it */
+.plan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* New for you: calendar items as simple links */
+.new-list {
+  padding: 0;
+  list-style: none;
+}
+
+.new-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  color: var(--text);
+}
+
+/* Small heart chart in the side column: hide its tiny labels (the text below says the numbers) */
+.chart-small .chart text {
+  display: none;
+}
+
+/* Trust circle initials in a row */
+.initials-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Theme switcher links in the top bar; the current one is bold with a border */
+.theme-switcher {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.theme-switcher a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 0.75rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.theme-switcher a[aria-current] {
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* ===== Show some things only on phones, others only on laptops ===== */
+@media (max-width: 899px) {
+  .desktop-only { display: none !important; }
+}
+
+@media (min-width: 900px) {
+  .phone-only { display: none !important; }
+}
+
 /* ===== Wide screens (900px and up): navigation becomes a top bar ===== */
 @media (min-width: 900px) {
   .site-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Top bar contents, centered and no wider than the dashboard */
+  .header-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
+    max-width: 1280px;
+    margin: 0 auto;
     padding: 0.5rem 2rem;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
   }
 
   .brand {
@@ -581,11 +843,36 @@ a:focus-visible, button:focus-visible {
   }
 
   main {
-    padding-bottom: 6rem;
+    padding-bottom: 3rem;
   }
 
-  .add-button {
-    right: 2rem;
-    bottom: 2rem;
+  /* Today becomes a dashboard: wider container, wide left column and narrow right column */
+  main.dashboard {
+    max-width: 1280px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  /* My plan in three columns: Morning, Afternoon, Evening */
+  .plan-columns {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .plan-columns h3 {
+    margin-top: 0;
+  }
+
+  /* Task cards are narrow in a column, so let the load tag wrap underneath */
+  .plan-columns .task {
+    flex-wrap: wrap;
   }
 }

@@ -1,9 +1,39 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <!-- Page heading -->
+  <!-- Page heading with the person's initials and name -->
   <h1>Me</h1>
+  <div class="person-row">
+    <span class="initials" aria-hidden="true">{{ person.first_name[0] }}{{ person.last_name[0] }}</span>
+    <div>
+      <strong class="person-name">{{ person.first_name }} {{ person.last_name }}</strong><br>
+      <span class="note">Demo mode. Sample data.</span>
+    </div>
+  </div>
 
-  <!-- Link back to the demo person list -->
-  <p><a class="text-link" href="{{ url_for('choose') }}">Switch person</a></p>
+  <!-- What drains this person -->
+  <section class="card">
+    <h2>What drains me</h2>
+    <ul>{% for d in person.drains %}<li>{{ d }}</li>{% endfor %}</ul>
+  </section>
+
+  <!-- What helps this person feel calm -->
+  <section class="card">
+    <h2>What helps me feel calm</h2>
+    <ul>{% for c in person.calms %}<li>{{ c }}</li>{% endfor %}</ul>
+  </section>
+
+  <!-- Setting: show or hide the greeting banner at the top of Today on laptops -->
+  <form method="post" action="{{ url_for('toggle_banner') }}" class="card">
+    <h2>Greeting banner</h2>
+    <p>Shows a greeting and a sunset picture at the top of Today on larger screens. It is <strong>{{ "on" if show_banner else "off" }}</strong>.</p>
+    <button type="submit" class="btn-secondary">{{ "Turn it off" if show_banner else "Turn it on" }}</button>
+  </form>
+
+  <!-- Links to more screens -->
+  <nav class="card link-list" aria-label="More">
+    <a href="{{ url_for('body') }}">My body today <span aria-hidden="true">›</span></a>
+    <a href="{{ url_for('settings') }}">Settings <span aria-hidden="true">›</span></a>
+    <a href="{{ url_for('choose') }}">Switch person <span aria-hidden="true">›</span></a>
+  </nav>
 {% endblock %}

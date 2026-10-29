@@ -59,3 +59,8 @@ def get_tasks(person_id):
 # A person's inbox messages, each with a suggested task
 def get_inbox(person_id):
     return rows_for("inbox.csv", person_id)
+
+
+# A person's trust circle: people they can reach out to, and the best way to reach them
+def get_circle(person_id):
+    return rows_for("circle.csv", person_id)

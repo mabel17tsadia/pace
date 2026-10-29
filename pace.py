@@ -1,6 +1,12 @@
 from datetime import datetime, timedelta
 
 
+# Turn minutes into "6 h 40 min" (or "8 h" when there are no extra minutes)
+def format_minutes(minutes):
+    hours, mins = divmod(minutes, 60)
+    return f"{hours} h {mins} min" if mins else f"{hours} h"
+
+
 # Work out today's pace (Gentle, Steady or Ready) from last night's sleep and
 # the last 30 minutes of heart rate, with a plain-English reason for each
 def get_pace(person, daily, heart):
@@ -23,8 +29,7 @@ def get_pace(person, daily, heart):
         level = "Steady"
 
     # Sleep reason, e.g. "Slept 6 h 40 min, less than usual"
-    hours, mins = divmod(sleep, 60)
-    slept = f"Slept {hours} h {mins} min" if mins else f"Slept {hours} h"
+    slept = f"Slept {format_minutes(sleep)}"
     if sleep_diff <= -45:
         sleep_reason = f"{slept}, less than usual"
     elif sleep_diff < 0:

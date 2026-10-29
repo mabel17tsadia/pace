@@ -3,7 +3,7 @@ from datetime import date, datetime
 from dotenv import load_dotenv
 from flask import Flask, render_template, session, redirect, request, url_for, abort, flash
 import data
-from pace import get_pace
+from pace import get_pace, format_minutes
 from ai import suggest_task, write_alert
 
 # Load settings like SECRET_KEY from the .env file
@@ -25,11 +25,64 @@ LOADS = ["Light", "Medium", "Heavy"]
 # Gentle alert messages already written, so Today doesn't call Claude on every visit
 ALERT_CACHE = {}
 
+# Data sources in the hidden Demo controls (Google Health is a placeholder, not connected)
+SOURCES = {"sample": "Sample data", "google": "Google Health"}
 
-# Give every template the user's current theme (calm if none picked yet)
+
+# Give every template the theme list and the user's settings
+# (calm theme, sample data and greeting banner on, if nothing picked yet)
 @app.context_processor
-def add_theme():
-    return {"theme": session.get("theme", "calm")}
+def add_settings():
+    return {"themes": THEMES,
+            "theme": session.get("theme", "calm"),
+            "data_source": session.get("data_source", "sample"),
+            "show_banner": session.get("banner", True)}
+
+
+# "Good morning", "Good afternoon" or "Good evening", from the computer's clock
+def greeting():
+    hour = datetime.now().hour
+    if hour < 12:
+        return "Good morning"
+    if hour < 18:
+        return "Good afternoon"
+    return "Good evening"
+
+
+# Morning, Afternoon or Evening for a time like "13:30" (no time counts as Morning)
+def part_of_day(time):
+    if not time or time < "12:00":
+        return "Morning"
+    if time < "17:00":
+        return "Afternoon"
+    return "Evening"
+
+
+# Template filter: minutes as "6 h 40 min"
+@app.template_filter("hours")
+def hours_filter(minutes):
+    return format_minutes(minutes)
+
+
+# Template filter: "2026-10-28" as "Wed 28"
+@app.template_filter("day")
+def day_filter(text):
+    d = date.fromisoformat(text)
+    return f"{d:%a} {d.day}"
+
+
+# Turn heart rate readings into points for a simple SVG line chart (600 x 240).
+# Values run from y=200 (lowest) up to y=20 (highest); time runs from x=50 to x=570.
+def heart_chart(heart, usual):
+    bpms = [h["bpm"] for h in heart]
+    low, high = min(bpms + [usual]) - 5, max(bpms + [usual]) + 5
+    to_y = lambda bpm: round(200 - (bpm - low) / (high - low) * 180)
+    step = 520 / (len(bpms) - 1)
+    points = " ".join(f"{round(50 + i * step)},{to_y(b)}" for i, b in enumerate(bpms))
+    return {"points": points, "usual": usual, "usual_y": to_y(usual), "low": low, "high": high,
+            "min": min(bpms), "max": max(bpms), "average": round(sum(bpms) / len(bpms)),
+            "first": heart[0]["time"][-5:], "middle": heart[len(heart) // 2]["time"][-5:],
+            "last": heart[-1]["time"][-5:]}
 
 
 # The person picked on the home page, or None if nobody is picked yet
@@ -61,7 +114,8 @@ def choose_person(person_id):
     return redirect(url_for("choose"))
 
 
-# Today screen: pace, inbox suggestions and the day's plan
+# Today screen: pace, alert, inbox and plan on phones; on laptops also a dashboard
+# column with body, circle and last check in
 @app.route("/today")
 def today():
     person = current_person()
@@ -69,10 +123,12 @@ def today():
         return redirect(url_for("choose"))
     pid = person["id"]
     daily = data.get_daily(pid)
+    heart = data.get_heart(pid)
     # The demo "today" is the newest date in the data, shown like "Wednesday 28 October"
     d = date.fromisoformat(daily[-1]["date"])
-    pace = get_pace(person, daily, data.get_heart(pid))
+    pace = get_pace(person, daily, heart)
     tasks = tasks_for(person)
+    checkins = [c for c in session.get("checkins", []) if c["person_id"] == pid]
 
     # Gentle alert: on a Gentle day, warn about the first Heavy task (unless "Keep my plan" was picked)
     alert = None
@@ -83,11 +139,15 @@ def today():
             ALERT_CACHE[key] = write_alert(person, heavy)
         alert = {"task": heavy, "message": ALERT_CACHE[key]}
 
-    return render_template("today.html", title="Today",
-                           day=f"{d:%A} {d.day} {d:%B}",
+    return render_template("today.html", title="Today", person=person,
+                           day=f"{d:%A} {d.day} {d:%B}", greeting=greeting(),
                            pace=pace, alert=alert,
                            inbox=data.get_inbox(pid),
-                           tasks=tasks)
+                           tasks=tasks,
+                           chart=heart_chart(heart, person["usual_resting_hr"]),
+                           last_day=daily[-1],
+                           circle=data.get_circle(pid),
+                           last_checkin=checkins[-1] if checkins else None)
 
 
 # Gentle alert choices: lighter task first, move to tomorrow, keep my plan, message someone
@@ -149,7 +209,8 @@ def add_task():
         steps = [s.strip()[:80] for s in request.form.getlist("steps") if s.strip()]
         added = session.get("added_tasks", [])
         added.append({"person_id": person["id"], "title": task_title,
-                      "time": request.form.get("time", ""), "part_of_day": "",
+                      "time": request.form.get("time", ""),
+                      "part_of_day": part_of_day(request.form.get("time", "")),
                       "load": request.form["load"], "source": "manual",
                       "steps": steps or [task_title]})
         session["added_tasks"] = added[-10:]
@@ -185,16 +246,55 @@ def checkin():
     return render_template("checkin.html", title="Check in", feelings=FEELINGS, checkins=mine)
 
 
-# Circle screen - placeholder for now
+# Trust circle: people this person can reach out to, each with a ready-made message to copy
 @app.route("/circle")
 def circle():
-    return render_template("placeholder.html", title="Circle")
+    person = current_person()
+    if not person:
+        return redirect(url_for("choose"))
+    return render_template("circle.html", title="Circle", circle=data.get_circle(person["id"]))
 
 
-# Me screen - placeholder for now
+# Me: the person, what drains and calms them, and links to My body today and Settings
 @app.route("/me")
 def me():
-    return render_template("me.html", title="Me")
+    person = current_person()
+    if not person:
+        return redirect(url_for("choose"))
+    return render_template("me.html", title="Me", person=person)
+
+
+# My body today: heart rate line chart, plus sleep and steps for the last 7 days
+@app.route("/body")
+def body():
+    person = current_person()
+    if not person:
+        return redirect(url_for("choose"))
+    daily = data.get_daily(person["id"])
+    return render_template("body.html", title="My body today", person=person,
+                           chart=heart_chart(data.get_heart(person["id"]), person["usual_resting_hr"]),
+                           daily=daily,
+                           max_sleep=max(d["sleep_min"] for d in daily),
+                           max_steps=max(d["steps"] for d in daily))
+
+
+# Settings: theme choice, plus hidden Demo controls for the data source
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    # Demo controls: save the chosen data source (the app still shows sample data either way)
+    if request.method == "POST" and request.form.get("source") in SOURCES:
+        session["data_source"] = request.form["source"]
+        flash(f"Data source set to {SOURCES[request.form['source']]}.")
+        return redirect(url_for("settings"))
+    return render_template("settings.html", title="Settings", sources=SOURCES)
+
+
+# Me page setting: turn the greeting banner on Today on or off
+@app.route("/banner", methods=["POST"])
+def toggle_banner():
+    session["banner"] = not session.get("banner", True)
+    flash("Greeting banner turned " + ("on." if session["banner"] else "off."))
+    return redirect(url_for("me"))
 
 
 # Save the chosen theme, then go back to the page the user was on

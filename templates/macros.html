@@ -19,6 +19,21 @@
 </svg>
 {% endmacro %}
 
+{# One task card for My plan: icon, title, time, source and load tag; tap to open its steps #}
+{% macro task_card(t, index) %}
+<a class="card task" href="{{ url_for('task_steps', index=index) }}">
+  <span class="task-icon">{{ icon(t.source) }}</span>
+  <div class="task-info">
+    <strong>{{ t.title }}</strong>
+    <span class="note">
+      {{ t.time }}
+      {% if t.source == "calendar" %} · from your calendar{% elif t.source == "inbox" %} · from your inbox{% endif %}
+    </span>
+  </div>
+  {{ load_tag(t.load) }}
+</a>
+{% endmacro %}
+
 {# Load tag: 1, 2 or 3 filled bars plus the word, so it never relies on color alone #}
 {% macro load_tag(load) %}
 {% set bars = {"Light": 1, "Medium": 2, "Heavy": 3}[load] %}

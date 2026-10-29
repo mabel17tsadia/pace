@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <!-- Page title -->
+  <h1>Settings</h1>
+
+  <!-- Theme: four options, each drawn in its own colors as a preview -->
+  <section class="card">
+    <h2>Theme</h2>
+    <div class="theme-list">
+      {% for t in themes %}
+        <a class="theme-option" data-theme="{{ t }}" href="{{ url_for('set_theme', name=t) }}"
+           {% if t == theme %}aria-current="true"{% endif %}>
+          <span class="swatches" aria-hidden="true">
+            <span style="background: var(--primary)"></span>
+            <span style="background: var(--secondary)"></span>
+            <span style="background: var(--alert)"></span>
+          </span>
+          {{ t | capitalize }}{% if t == theme %} (current){% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Demo controls: closed by default; switch the data source for testing -->
+  <details class="card demo-controls">
+    <summary>Demo controls</summary>
+    <p class="note">For testing the demo. Google Health is not connected yet, so the app keeps showing sample data.</p>
+    <form method="post">
+      <fieldset class="choices">
+        <legend>Data source</legend>
+        {% for key, label in sources.items() %}
+          <label class="choice">
+            <input type="radio" name="source" value="{{ key }}" class="visually-hidden"
+                   {% if key == data_source %}checked{% endif %}>
+            <span class="choice-box">{{ label }}</span>
+          </label>
+        {% endfor %}
+      </fieldset>
+      <button type="submit" class="btn-primary">Save</button>
+    </form>
+  </details>
+{% endblock %}

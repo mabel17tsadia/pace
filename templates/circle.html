@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <!-- Page title and short intro -->
+  <h1>Circle</h1>
+  <p>People you trust. Reach out when you need a hand.</p>
+
+  <!-- One card per trusted person, with a ready-made message to copy -->
+  {% for c in circle %}
+    {% set first = c.name.split()[0] %}
+    <section class="card">
+      <div class="person-row">
+        <span class="initials initials-small" aria-hidden="true">{{ c.name.split()[0][0] }}{{ c.name.split()[-1][0] }}</span>
+        <div>
+          <strong>{{ c.name }}</strong><br>
+          <span class="note">{{ c.relationship }} · best by {{ c.best_way | lower }}</span>
+        </div>
+      </div>
+      <details class="message-box">
+        <summary class="btn-secondary">Message {{ first }}</summary>
+        <label for="msg-{{ loop.index }}">Ready-made message (you can change it)</label>
+        <textarea id="msg-{{ loop.index }}" rows="3">Hi {{ first }}, today is a low-energy day for me. Could you check in with me later?</textarea>
+        <button type="button" class="btn-primary" data-copy="msg-{{ loop.index }}">Copy message</button>
+      </details>
+    </section>
+  {% else %}
+    <p class="card">No one in your circle yet.</p>
+  {% endfor %}
+
+  <!-- Reminder that Pace never sends messages itself -->
+  <p class="note">Pace does not send messages. Copy the text and send it the way you usually would.</p>
+{% endblock %}
