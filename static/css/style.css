@@ -1,0 +1,14 @@
+/* Theme colors and fonts used across the app */
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --font: system-ui, sans-serif;
+}
+
+/* Basic page look */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  margin: 2rem;
+}

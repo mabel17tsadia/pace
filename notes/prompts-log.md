@@ -1,0 +1,2 @@
+   ## Stage 0, 28 October 2026
+   "Create a simple Flask app in this folder. This folder already has CLAUDE.md; keep it. Use this structure: app.py, templates/, static/css/, static/js/, data/, notes/. Create a virtual environment and a requirements.txt with only flask, pandas, python-dotenv, and anthropic. The home page should just say 'Pace'. Add a .gitignore that includes .env, venv/, and pycache/. Add a short README with how to run the app. Explain each file and folder you created in plain English."
