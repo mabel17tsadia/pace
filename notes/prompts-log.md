@@ -178,3 +178,16 @@ Check in "Build the Check in page with five picture buttons, an optional note, S
 ## Stage 6. , 28 October 2026
 AI and Add a task "Write ai.py that calls Claude using the key from .env. Add a function suggest_task(text) that returns a load level and up to 4 short steps as JSON. If the call fails, use a simple keyword lookup as a backup. Build the Add a task page so the person can change the suggestion before saving."
   
+## ## Stage 6 fix, 28 October 2026
+Bug found while testing: missing API key crashed the Add a task page.
+[Bug found while testing the backup: when ANTHROPIC_API_KEY is missing
+from .env (commented out), the Add a task page crashes with
+"TypeError: Could not resolve authentication method" from ai.py line 43,
+instead of using the keyword backup.
+
+Fix suggest_task so that:
+1. If no API key is set, it skips the Claude call and uses the keyword
+   backup straight away, printing "No API key found, using keyword backup".
+2. Any unexpected error during the Claude call also falls back to the
+   backup instead of crashing the page.
+Keep the change small and commented. Then tell me how to test both cases.]

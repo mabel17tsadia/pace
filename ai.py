@@ -1,4 +1,5 @@
 import json
+import os
 import anthropic
 from dotenv import load_dotenv
 
@@ -38,6 +39,10 @@ DEFAULT = ("Medium", ["Get what you need ready", "Start with one small part", "T
 
 # Ask Claude for a load level and up to 4 steps; use the keyword backup if anything goes wrong
 def suggest_task(text):
+    # No key in .env: don't try to call Claude, go straight to the backup
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        print("No API key found, using keyword backup")
+        return keyword_backup(text)
     try:
         client = anthropic.Anthropic(timeout=20.0, max_retries=1)
         response = client.beta.messages.create(
@@ -53,7 +58,8 @@ def suggest_task(text):
             return keyword_backup(text)
         answer = json.loads(next((b.text for b in response.content if b.type == "text"), ""))
         return {"load": answer["load"], "steps": answer["steps"][:4], "source": "ai"}
-    except (anthropic.AnthropicError, ValueError, KeyError) as error:
+    # Any error at all (network, bad key, odd answer, SDK problem) uses the backup instead of crashing
+    except Exception as error:
         print("AI suggestion failed, using keyword backup:", error)
         return keyword_backup(text)
 
