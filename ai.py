@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 # Load ANTHROPIC_API_KEY from the .env file (the Anthropic client reads it from there)
 load_dotenv()
 
-# Instructions for Claude
+# Instructions for Claude when suggesting a task's load and steps
 SYSTEM = """You help people plan their day in small, calm steps.
 For the task the person gives you, choose how much energy it takes
 (Light, Medium or Heavy) and write up to 4 short, concrete steps.
@@ -23,6 +23,14 @@ SCHEMA = {
     "additionalProperties": False,
 }
 
+# Instructions for Claude when writing the gentle alert
+ALERT_SYSTEM = """You write short, kind messages for a calm planning app.
+The person has low energy today and a heavy task coming up.
+Write 2 short sentences in plain, simple words. Gently name one thing
+that may drain them, and suggest one thing that helps them feel calm.
+Do not give medical advice. Do not use exclamation marks.
+Reply with only the message."""
+
 # Backup suggestions: if a keyword appears in the task, use its load and steps
 KEYWORDS = {
     "clean": ("Medium", ["Get your cleaning things", "Clean one small area", "Put things back", "Wash your hands"]),
@@ -37,6 +45,26 @@ KEYWORDS = {
 DEFAULT = ("Medium", ["Get what you need ready", "Start with one small part", "Take a short break if needed", "Finish and tidy up"])
 
 
+# Send one message to Claude and return its text reply (raises an error if anything goes wrong)
+def ask_claude(system, text, output_format=None):
+    client = anthropic.Anthropic(timeout=20.0, max_retries=1)
+    output_config = {"effort": "low"}
+    if output_format:
+        output_config["format"] = output_format
+    response = client.beta.messages.create(
+        model="claude-opus-5-5",
+        max_tokens=16000,
+        betas=["server-side-fallback-2026-07-01"],
+        fallbacks="default",  # if Claude declines, the API retries on another model
+        output_config=output_config,
+        system=system,
+        messages=[{"role": "user", "content": text}],
+    )
+    if response.stop_reason == "refusal":
+        raise ValueError("Claude declined the request")
+    return next((b.text for b in response.content if b.type == "text"), "")
+
+
 # Ask Claude for a load level and up to 4 steps; use the keyword backup if anything goes wrong
 def suggest_task(text):
     # No key in .env: don't try to call Claude, go straight to the backup
@@ -44,19 +72,7 @@ def suggest_task(text):
         print("No API key found, using keyword backup")
         return keyword_backup(text)
     try:
-        client = anthropic.Anthropic(timeout=20.0, max_retries=1)
-        response = client.beta.messages.create(
-            model="claude-opus-5-5",
-            max_tokens=16000,
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",  # if Claude declines, the API retries on another model
-            output_config={"effort": "low", "format": {"type": "json_schema", "schema": SCHEMA}},
-            system=SYSTEM,
-            messages=[{"role": "user", "content": text}],
-        )
-        if response.stop_reason == "refusal":
-            return keyword_backup(text)
-        answer = json.loads(next((b.text for b in response.content if b.type == "text"), ""))
+        answer = json.loads(ask_claude(SYSTEM, text, {"type": "json_schema", "schema": SCHEMA}))
         return {"load": answer["load"], "steps": answer["steps"][:4], "source": "ai"}
     # Any error at all (network, bad key, odd answer, SDK problem) uses the backup instead of crashing
     except Exception as error:
@@ -71,3 +87,22 @@ def keyword_backup(text):
             return {"load": load, "steps": steps, "source": "backup"}
     load, steps = DEFAULT
     return {"load": load, "steps": steps, "source": "backup"}
+
+
+# Write a kind alert about a Heavy task on a Gentle day, using the person's drains and calms
+def write_alert(person, task):
+    backup = f"Your energy may be lower today, and {task['title']} can take a lot. It is okay to go slowly or change your plan."
+    # No key in .env: use the fixed sentence
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        print("No API key found, using fixed alert")
+        return backup
+    details = (f"Name: {person['first_name']}\n"
+               f"Heavy task: {task['title']} at {task['time']}\n"
+               f"Things that drain them: {', '.join(person['drains'])}\n"
+               f"Things that help them feel calm: {', '.join(person['calms'])}")
+    try:
+        return ask_claude(ALERT_SYSTEM, details).strip() or backup
+    # Any error at all uses the fixed sentence instead of crashing
+    except Exception as error:
+        print("AI alert failed, using fixed alert:", error)
+        return backup

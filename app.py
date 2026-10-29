@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from flask import Flask, render_template, session, redirect, request, url_for, abort, flash
 import data
 from pace import get_pace
-from ai import suggest_task
+from ai import suggest_task, write_alert
 
 # Load settings like SECRET_KEY from the .env file
 load_dotenv()
@@ -22,6 +22,9 @@ FEELINGS = ["Calm", "Okay", "Tired", "Worried", "Overwhelmed"]
 # The three load levels a task can have
 LOADS = ["Light", "Medium", "Heavy"]
 
+# Gentle alert messages already written, so Today doesn't call Claude on every visit
+ALERT_CACHE = {}
+
 
 # Give every template the user's current theme (calm if none picked yet)
 @app.context_processor
@@ -34,10 +37,13 @@ def current_person():
     return data.get_person(session.get("person_id"))
 
 
-# Today's tasks for a person: the demo tasks plus any they added, in time order
+# Today's tasks for a person: the demo tasks plus any they added, minus any moved
+# to tomorrow, in time order
 def tasks_for(person):
     added = [t for t in session.get("added_tasks", []) if t["person_id"] == person["id"]]
-    return sorted(data.get_tasks(person["id"]) + added, key=lambda t: t["time"] or "99:99")
+    moved = session.get("moved", [])
+    tasks = [t for t in data.get_tasks(person["id"]) + added if [person["id"], t["title"]] not in moved]
+    return sorted(tasks, key=lambda t: t["time"] or "99:99")
 
 
 # Home page: choose which demo person to use
@@ -65,11 +71,55 @@ def today():
     daily = data.get_daily(pid)
     # The demo "today" is the newest date in the data, shown like "Wednesday 28 October"
     d = date.fromisoformat(daily[-1]["date"])
+    pace = get_pace(person, daily, data.get_heart(pid))
+    tasks = tasks_for(person)
+
+    # Gentle alert: on a Gentle day, warn about the first Heavy task (unless "Keep my plan" was picked)
+    alert = None
+    heavy = next((t for t in tasks if t["load"] == "Heavy"), None)
+    if pace["level"] == "Gentle" and heavy and pid not in session.get("alert_kept", []):
+        key = (pid, heavy["title"])
+        if key not in ALERT_CACHE:
+            ALERT_CACHE[key] = write_alert(person, heavy)
+        alert = {"task": heavy, "message": ALERT_CACHE[key]}
+
     return render_template("today.html", title="Today",
                            day=f"{d:%A} {d.day} {d:%B}",
-                           pace=get_pace(person, daily, data.get_heart(pid)),
+                           pace=pace, alert=alert,
                            inbox=data.get_inbox(pid),
-                           tasks=tasks_for(person))
+                           tasks=tasks)
+
+
+# Gentle alert choices: lighter task first, move to tomorrow, keep my plan, message someone
+@app.route("/alert", methods=["POST"])
+def alert_choice():
+    person = current_person()
+    if not person:
+        return redirect(url_for("choose"))
+    choice = request.form.get("choice")
+    title = request.form.get("title", "")
+    tasks = tasks_for(person)
+
+    # Lighter task first: open the steps of the first Light task
+    if choice == "lighter":
+        light = next((i for i, t in enumerate(tasks) if t["load"] == "Light"), None)
+        if light is not None:
+            flash(f"Starting with a lighter task: {tasks[light]['title']}.")
+            return redirect(url_for("task_steps", index=light))
+        flash("There is no lighter task today.")
+    # Move to tomorrow: hide the task from today's plan (demo only, saved in the session)
+    elif choice == "move":
+        session["moved"] = session.get("moved", []) + [[person["id"], title]]
+        flash(f"{title} moved to tomorrow.")
+    # Keep my plan: hide the alert for this person
+    elif choice == "keep":
+        session["alert_kept"] = session.get("alert_kept", []) + [person["id"]]
+        flash("Okay, keeping your plan. Go gently.")
+    # Message someone I trust: open the Circle page
+    elif choice == "message":
+        flash("Choose someone in your Circle to message.")
+        return redirect(url_for("circle"))
+    return redirect(url_for("today"))
 
 
 # Task steps screen: one task's steps, shown one at a time by static/js/steps.js
